@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template
 from config import DevConfig
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
@@ -74,18 +74,18 @@ class Tag(db.Model):
 
 
 def sidebar_data():
-    recent = Post.query.order_by(Post.publish_data.desc()).limit(5).all()
+    recent = Post.query.order_by(Post.publish_date.desc()).limit(5).all()
     top_tags  = db.session.query(Tag,func.count(tags.c.post_id).label('total')).join(tags).group_by(Tag).order_by('total DESC').limit(5).all()
 
-    return recent,tog_tags
+    return recent,top_tags
 
 @app.route('/')
 @app.route('/<int:page>')
 def home(page=1):
-    posts = Post.query.order_by(Post.publish_data.desc()).paginate(page,10)
+    posts = Post.query.order_by(Post.publish_date.desc()).paginate(page,10)
     recent,top_tags = sidebar_data()
 
-    return render_templates(
+    return render_template(
         'home.html',
         posts = posts,
         recent = recent,
@@ -98,7 +98,7 @@ def post(post_id):
     comments = post.comments.order_by(Comment.date.desc()).all()
     recent,top_tags = sidebar_data()
 
-    return render_templats(
+    return render_template(
     'post.html',
      post = post,
      tags = tags,
@@ -124,7 +124,7 @@ def tag(tag_name):
 @app.route('/user/<string:username>')
 def user(username):
         user = User.query.filter_by(username=username).first_or_404()
-        posts = user.posts.order_by(Post.publish_data.desc()).all()
+        posts = user.posts.order_by(Post.publish_date.desc()).all()
         recent,top_tags = sidebar_data()
         return render_template(
                 'user.html',
